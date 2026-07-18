@@ -447,7 +447,8 @@ describe("findNearestVertices (degenerate triangulation)", () => {
    * Regression test: near-duplicate vertices (from Float32 quantization of
    * very close coordinates) can create degenerate triangles where the
    * triangle walk loops forever. The fix detects cycles and falls back
-   * to brute-force search. Reproduces the Stockholm bug (tour-guide-mae).
+   * to brute-force search. Reproduces the Stockholm near-duplicate-vertex
+   * fixture that triggered this bug.
    */
   it("finds the nearest vertex when the triangle walk hits a cycle", () => {
     // Near-duplicate points that collapse into degenerate triangles after
@@ -510,8 +511,9 @@ describe("findNearestVertices (Float32 quantization)", () => {
  *
  * Unlike full-sphere fixtures, the convex hull of a patch is a thin lens
  * whose underside ("back closure") gives the locate walk no containing
- * triangle for queries outside the patch — the regression area for
- * tour-guide-8lmb.
+ * triangle for queries outside the patch — the scenario that once sent
+ * out-of-patch walks into infinite orbits before the back-closure mask
+ * and patience rule were added.
  */
 function buildPatch(): {
   ctx: QueryContext;
@@ -1362,7 +1364,7 @@ describe("locateTriangle (patch, thin-lens hull)", () => {
 });
 
 describe("locateTriangle (degenerate triangulations)", () => {
-  it("never returns NaN weights when the input contains an exact duplicate point (tour-guide-895a)", () => {
+  it("never returns NaN weights when the input contains an exact duplicate point", () => {
     const points: Point3D[] = [...OCTAHEDRON_POINTS, [1, 0, 0]];
     const ctx = createQueryContext(flattenTriangulation(buildTri(points)));
 
@@ -1390,7 +1392,7 @@ describe("locateTriangle (degenerate triangulations)", () => {
     }
   });
 
-  it("locates a query on the Stockholm Float32-quantization fixture (tour-guide-mae)", () => {
+  it("locates a query on the Stockholm Float32-quantization fixture", () => {
     const inputs = [
       { lat: 59.3208, lon: 18.0594 }, // Stockholm A
       { lat: 59.3208, lon: 18.05941 }, // Stockholm B, ~0.07m from A
