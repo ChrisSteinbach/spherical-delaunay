@@ -105,3 +105,24 @@ export function buildTriangulation(hull: ConvexHull): SphericalDelaunay {
 
   return { vertices, triangles, originalIndices };
 }
+
+/**
+ * Inverse of {@link SphericalDelaunay.originalIndices}: a map from each
+ * original input-point index to the vertex index it became.
+ *
+ * `originalIndices[v]` gives the input index of vertex `v`; this builds the
+ * reverse lookup. Input points that never became vertices — interior points
+ * of a spherical-cap (regional) dataset, and exact duplicates dropped by
+ * convexHull's dedupe — have no entry. When every input lies on the hull
+ * (always the case for a full-sphere point set with no duplicates) the map is
+ * the identity i → i over all inputs.
+ */
+export function buildInputToVertexMap(
+  tri: SphericalDelaunay,
+): Map<number, number> {
+  const map = new Map<number, number>();
+  for (let v = 0; v < tri.originalIndices.length; v++) {
+    map.set(tri.originalIndices[v], v);
+  }
+  return map;
+}

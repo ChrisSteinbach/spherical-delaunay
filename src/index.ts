@@ -6,8 +6,22 @@
 /** [x, y, z] on unit sphere */
 export type Point3D = [number, number, number];
 
-/** Latitude/longitude in degrees */
+/**
+ * A point on a sphere in angular degrees: `lat` is the polar coordinate
+ * (−90 at one pole to +90 at the other), `lon` the azimuthal coordinate.
+ * Named for the geographic (Earth) case, but the convention is
+ * sphere-agnostic — see {@link SphericalCoord}.
+ */
 export type LatLon = { lat: number; lon: number };
+
+/**
+ * Sphere-agnostic alias for {@link LatLon}, for non-geographic spheres where
+ * "latitude/longitude" reads awkwardly (e.g. a star catalog mapping
+ * declination → `lat` and right-ascension-hours × 15 → `lon`): `lat` is the
+ * polar coordinate in degrees, `lon` the azimuthal coordinate in degrees.
+ * Identical shape to `LatLon`; use whichever name fits the domain.
+ */
+export type SphericalCoord = LatLon;
 
 // ---------- Internal helpers ----------
 
@@ -192,7 +206,7 @@ export type { HullFace, ConvexHull } from "./convex-hull.js";
 
 // ---------- Delaunay triangulation (re-exports) ----------
 
-export { buildTriangulation } from "./delaunay.js";
+export { buildTriangulation, buildInputToVertexMap } from "./delaunay.js";
 export type {
   DelaunayTriangle,
   DelaunayVertex,
