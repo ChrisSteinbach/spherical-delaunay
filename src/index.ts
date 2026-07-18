@@ -247,3 +247,8 @@ export {
   BinaryFormatError,
 } from "./serialization.js";
 export type { TriangulationFile, FlatDelaunay } from "./serialization.js";
+
+// ---------- Circumcircle data (re-exports) ----------
+
+export { computeCircumdata } from "./circumdata.js";
+export type { Circumdata } from "./circumdata.js";
