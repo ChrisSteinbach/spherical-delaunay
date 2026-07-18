@@ -8,7 +8,7 @@ import {
   initialBearing,
   sphericalCircumcenter,
 } from "./index.js";
-import type { Point3D, LatLon } from "./index.js";
+import type { Point3D, LatLon, SphericalCoord } from "./index.js";
 
 const EPSILON = 1e-10;
 
@@ -405,5 +405,18 @@ describe("sphericalCircumcenter", () => {
     const dc = sphericalDistance(cc, c);
     expectClose(da, db, 1e-9);
     expectClose(db, dc, 1e-9);
+  });
+});
+
+// ---------- Type aliases ----------
+
+describe("SphericalCoord", () => {
+  it("is interchangeable with LatLon", () => {
+    const coord: SphericalCoord = { lat: 12.3, lon: 45.6 };
+    const asLatLon: LatLon = coord;
+    const backToCoord: SphericalCoord = asLatLon;
+
+    expect(toCartesian(backToCoord)).toHaveLength(3);
+    expect(toLatLon(toCartesian(backToCoord)).lat).toBeCloseTo(12.3, 9);
   });
 });

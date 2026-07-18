@@ -2,6 +2,7 @@ import { buildTriangulation } from "./delaunay.js";
 import type { SphericalDelaunay } from "./delaunay.js";
 import type { ConvexHull } from "./convex-hull.js";
 import {
+  buildInputToVertexMap,
   convexHull,
   sphericalDistance,
   toCartesian,
@@ -419,5 +420,63 @@ describe("buildTriangulation", () => {
       expect(tri.vertices.length).toBe(10);
       validateTriangulation(tri);
     });
+  });
+});
+
+// ---------- Input-to-vertex mapping ----------
+
+describe("buildInputToVertexMap", () => {
+  const octahedronPoints: Point3D[] = [
+    [1, 0, 0],
+    [-1, 0, 0],
+    [0, 1, 0],
+    [0, -1, 0],
+    [0, 0, 1],
+    [0, 0, -1],
+  ];
+
+  it("is the inverse of originalIndices", () => {
+    const hull = convexHull(octahedronPoints);
+    const tri = buildTriangulation(hull);
+    const map = buildInputToVertexMap(tri);
+
+    expect(map.size).toBe(tri.originalIndices.length);
+    for (let v = 0; v < tri.originalIndices.length; v++) {
+      expect(map.get(tri.originalIndices[v])).toBe(v);
+    }
+  });
+
+  it("is the identity for distinct hull vertices", () => {
+    const hull = convexHull(octahedronPoints);
+    const tri = buildTriangulation(hull);
+    const map = buildInputToVertexMap(tri);
+
+    expect(map.size).toBe(6);
+    for (let i = 0; i < 6; i++) {
+      expect(map.get(i)).toBe(i);
+    }
+  });
+
+  it("omits input points dropped as exact duplicates", () => {
+    const points: Point3D[] = [
+      [1, 0, 0], // 0
+      [-1, 0, 0], // 1
+      [0, 1, 0], // 2
+      [0, -1, 0], // 3
+      [0, 0, 1], // 4
+      [0, 0, -1], // 5
+      [1, 0, 0], // 6 — exact duplicate of index 0
+    ];
+
+    const hull = convexHull(points);
+    const tri = buildTriangulation(hull);
+    const map = buildInputToVertexMap(tri);
+
+    expect(tri.originalIndices).not.toContain(6);
+    expect(map.has(6)).toBe(false);
+    expect(map.size).toBe(6);
+    for (let i = 0; i < 6; i++) {
+      expect(map.get(i)).toBe(i);
+    }
   });
 });

@@ -2,6 +2,7 @@ import {
   toCartesian,
   normalize,
   dot,
+  cross,
   sideOfGreatCircle,
   convexHull,
   buildTriangulation,
@@ -92,6 +93,18 @@ const WORLD_CITIES = [
   { lat: -1.2921, lon: 36.8219 }, // Nairobi
   { lat: 64.1466, lon: -21.9426 }, // Reykjavik
 ];
+
+/** Deterministic quasi-uniform points via the Fibonacci sphere construction. */
+function fibonacciSphere(count: number): Point3D[] {
+  const phi = (1 + Math.sqrt(5)) / 2;
+  const pts: Point3D[] = [];
+  for (let k = 0; k < count; k++) {
+    const lat = (Math.asin((2 * (k + 0.5)) / count - 1) * 180) / Math.PI;
+    const lon = ((((2 * Math.PI * k) / phi) % (2 * Math.PI)) * 180) / Math.PI;
+    pts.push(toCartesian({ lat, lon }));
+  }
+  return pts;
+}
 
 function vertexPoint(fd: FlatDelaunay, vertex: number): Point3D {
   const vp = fd.vertexPoints;
@@ -304,6 +317,111 @@ describe("vertexNeighbors", () => {
       }
 
       expect(neighborEdges).toEqual(triangleEdges);
+    });
+  });
+
+  describe("clockwise ordering (rotational direction)", () => {
+    /**
+     * Signed volume of (P, U0, U1): negative when U0 → U1 turns clockwise
+     * around pivot P as seen from outside the sphere, positive when it
+     * turns counter-clockwise.
+     */
+    function dirSign(P: Point3D, U0: Point3D, U1: Point3D): number {
+      return dot(P, cross(U0, U1));
+    }
+
+    /**
+     * Walks every vertex's `vertexNeighbors` ring and classifies the turn
+     * direction of each consecutive pair (including the wrap-around from
+     * the last entry back to the first) around the pivot.
+     */
+    function everyStepClockwise(fd: FlatDelaunay): {
+      total: number;
+      nonClockwise: number;
+    } {
+      let total = 0;
+      let nonClockwise = 0;
+      for (let p = 0; p < fd.vertexTriangles.length; p++) {
+        const nb = vertexNeighbors(fd, p);
+        const pivot = vertexPoint(fd, p);
+        for (let i = 0; i < nb.length; i++) {
+          const u0 = vertexPoint(fd, nb[i]);
+          const u1 = vertexPoint(fd, nb[(i + 1) % nb.length]);
+          const s = dirSign(pivot, u0, u1);
+          total++;
+          if (s >= 0) nonClockwise++;
+        }
+      }
+      return { total, nonClockwise };
+    }
+
+    it("returns neighbors clockwise around the pivot as seen from outside", () => {
+      const fixtures: { label: string; fd: FlatDelaunay }[] = [
+        {
+          label: "octahedron",
+          fd: flattenTriangulation(buildTri(OCTAHEDRON_POINTS)),
+        },
+        {
+          label: "world cities",
+          fd: flattenTriangulation(buildTri(WORLD_CITIES.map(toCartesian))),
+        },
+        {
+          label: "fibonacci sphere (200)",
+          fd: flattenTriangulation(buildTri(fibonacciSphere(200))),
+        },
+      ];
+
+      for (const { label, fd } of fixtures) {
+        const { total, nonClockwise } = everyStepClockwise(fd);
+        expect(
+          total,
+          `${label}: expected at least one consecutive neighbor pair`,
+        ).toBeGreaterThan(0);
+        expect(
+          nonClockwise,
+          `${label}: found a non-clockwise consecutive neighbor pair`,
+        ).toBe(0);
+      }
+    });
+
+    it("consecutive neighbors are fan-adjacent (share a triangle with the pivot)", () => {
+      const fixtures: { label: string; fd: FlatDelaunay }[] = [
+        {
+          label: "octahedron",
+          fd: flattenTriangulation(buildTri(OCTAHEDRON_POINTS)),
+        },
+        {
+          label: "world cities",
+          fd: flattenTriangulation(buildTri(WORLD_CITIES.map(toCartesian))),
+        },
+      ];
+
+      for (const { label, fd } of fixtures) {
+        // Sorted vertex-triples of every triangle, for fan-adjacency lookup.
+        const triangleTriples = new Set<string>();
+        const T = fd.triangleVertices.length / 3;
+        for (let ti = 0; ti < T; ti++) {
+          const [x, y, z] = [
+            fd.triangleVertices[ti * 3],
+            fd.triangleVertices[ti * 3 + 1],
+            fd.triangleVertices[ti * 3 + 2],
+          ].sort((m, n) => m - n);
+          triangleTriples.add(`${x}-${y}-${z}`);
+        }
+
+        for (let p = 0; p < fd.vertexTriangles.length; p++) {
+          const nb = vertexNeighbors(fd, p);
+          for (let i = 0; i < nb.length; i++) {
+            const a = nb[i];
+            const b = nb[(i + 1) % nb.length];
+            const [x, y, z] = [p, a, b].sort((m, n) => m - n);
+            expect(
+              triangleTriples.has(`${x}-${y}-${z}`),
+              `${label} pivot ${p}: (${a},${b}) not fan-adjacent`,
+            ).toBe(true);
+          }
+        }
+      }
     });
   });
 });

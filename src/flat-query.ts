@@ -351,6 +351,19 @@ function flatLocate(
 /**
  * Delaunay neighbors of a vertex, enumerated by walking its triangle fan.
  *
+ * Ordering is a contract, not an accident. Without `skipTriangles` the result
+ * is the pivot's complete one-ring in rotational order — clockwise around the
+ * pivot as seen from OUTSIDE the sphere (counter-clockwise seen from the
+ * centre) — and consecutive entries are fan-adjacent: `result[i]` and
+ * `result[i + 1]` share an incident triangle with the pivot. So the list
+ * doubles as the ordered one-ring a Voronoi/dual consumer needs, its k-th edge
+ * lining up with the k-th incident triangle. This rests on the neighbor-slot
+ * convention (a triangle's slot i borders the edge from its vertex slot i to
+ * slot (i + 1) % 3, and faces wind CCW from outside): each step emits the
+ * pivot's slot-forward vertex, then crosses that shared edge — via the same
+ * slot's neighbor — into the next fan triangle, sweeping the ring one triangle
+ * at a time until it closes on the start.
+ *
  * With `skipTriangles` (the back-closure mask), neighbors contributed by
  * masked fan triangles are omitted — for a rim vertex those are chords to
  * distant rim vertices across the hull's underside. BFS expansions pass
@@ -359,7 +372,9 @@ function flatLocate(
  * the visit budget over rim clusters hundreds of kilometres away and
  * breaking the "hop order roughly tracks distance order" assumption the
  * expansion budget relies on. The fan is still traversed THROUGH masked
- * triangles (the walk needs the full cycle); only emission is skipped.
+ * triangles (the walk needs the full cycle); only emission is skipped — so a
+ * masked result is the front-side subsequence of the same clockwise ring:
+ * still ordered, but consecutive entries may span a skipped triangle.
  */
 export function vertexNeighbors(
   fd: FlatDelaunay,

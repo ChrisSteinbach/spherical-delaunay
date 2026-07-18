@@ -1,6 +1,6 @@
 {
   "name": "spherical-delaunay",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Spherical Delaunay triangulation via 3D convex hull, with O(sqrt(N)) nearest-neighbor queries",
   "license": "ISC",
   "author": "Chris Steinbach",
