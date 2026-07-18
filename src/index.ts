@@ -177,6 +177,13 @@ export function sphericalCircumcenter(
   return n;
 }
 
+// ---------- Spherical area (re-exports) ----------
+
+export {
+  sphericalTriangleArea,
+  sphericalPolygonArea,
+} from "./spherical-area.js";
+
 // ---------- Convex hull (re-exports) ----------
 
 export { convexHull } from "./convex-hull.js";
