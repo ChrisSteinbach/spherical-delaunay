@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "spherical_delaunay",
+  "project_id": "db9b6cbd-e726-4430-a860-6594f1e4aa92"
+}

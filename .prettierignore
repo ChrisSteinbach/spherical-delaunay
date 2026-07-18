@@ -4,3 +4,4 @@ coverage/
 src/vendor/
 .beads/
 .claude/
+AGENTS.md
