@@ -131,8 +131,29 @@ export function initialBearing(from: LatLon, to: LatLon): number {
 
 /**
  * Spherical circumcenter: the point on the unit sphere equidistant to a, b, c.
- * Computed as normalize((b−a) × (c−a)), with sign chosen so it's on the same
- * side as the triangle's centroid.
+ * Computed as normalize((b−a) × (c−a)), with the sign chosen so the result is
+ * on the same side of the sphere as the triangle's centroid.
+ *
+ * Empty-circumcap guarantee. When the triangle is a face of a convex hull that
+ * contains the origin — which every Delaunay triangle produced by `convexHull`
+ * is — the centroid-side choice returns the *empty-circumcap* center (the
+ * Delaunay/Voronoi vertex), never its antipode. The face plane through a, b, c
+ * has a positive offset h along its outward normal (the origin lies strictly
+ * inside the hull, so h > 0), hence dot(n_out, a + b + c) = 3h > 0: the
+ * centroid side IS the outward side. The result is that outward unit normal,
+ * so dot(cc, a) = dot(cc, b) = dot(cc, c) = h ∈ (0, 1) and the circumradius
+ * acos(h) is always < π/2.
+ *
+ * Corollary — the Delaunay property, exactly: every other hull vertex v lies
+ * on the inner side of that plane (dot(n_out, v) ≤ h), so the open spherical
+ * cap { q : dot(cc, q) > dot(cc, a) } holds no vertex but a, b, c. That
+ * dot(cc, q) > h test — "q is above the face plane" — is the acos-free
+ * in-circumcap predicate a Voronoi/Sibson consumer reaches for.
+ *
+ * Degenerate input — two or more coincident vertices (e.g. near-duplicates
+ * collapsed to identical coordinates by Float32 quantization) — makes
+ * (b−a) × (c−a) vanish and the result NaN; per-triangle consumers must guard
+ * for it.
  */
 export function sphericalCircumcenter(
   a: Point3D,
