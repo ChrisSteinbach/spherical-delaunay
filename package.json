@@ -1,35 +1,67 @@
 {
   "name": "spherical-delaunay",
   "version": "0.1.0",
-  "private": true,
   "description": "Spherical Delaunay triangulation via 3D convex hull, with O(sqrt(N)) nearest-neighbor queries",
   "license": "ISC",
   "author": "Chris Steinbach",
+  "homepage": "https://github.com/ChrisSteinbach/spherical-delaunay#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ChrisSteinbach/tour-guide.git",
-    "directory": "lib/spherical-delaunay"
+    "url": "git+https://github.com/ChrisSteinbach/spherical-delaunay.git"
   },
+  "bugs": {
+    "url": "https://github.com/ChrisSteinbach/spherical-delaunay/issues"
+  },
+  "keywords": [
+    "delaunay",
+    "spherical",
+    "triangulation",
+    "convex-hull",
+    "nearest-neighbor",
+    "great-circle",
+    "geospatial",
+    "voronoi",
+    "computational-geometry",
+    "sphere"
+  ],
   "type": "module",
   "sideEffects": false,
   "engines": {
     "node": ">=18"
   },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     }
   },
-  "types": "./dist/index.d.ts",
   "files": [
     "dist",
     "src",
     "!src/**/*.test.ts"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write .",
+    "test": "vitest run",
     "prepare": "npm run build",
-    "test": "vitest run"
+    "prepublishOnly": "npm run typecheck && npm run lint && npm run format && npm test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.1.1",
+    "eslint": "^10.7.0",
+    "prettier": "^3.9.5",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.64.0",
+    "vitest": "^4.1.0"
   }
 }
